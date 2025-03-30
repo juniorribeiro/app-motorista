@@ -1,0 +1,66 @@
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: driver-dash-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: senha123
+      MYSQL_DATABASE: driver_dash
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/db/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    networks:
+      - driver-dash-network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: driver-dash-backend
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DB_HOST: mysql
+      DB_USER: app_user
+      DB_PASSWORD: app_password
+      DB_NAME: driver_dash
+      JWT_SECRET: segredo_jwt_super_secreto_para_ambiente_docker
+      JWT_EXPIRES_IN: 7d
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - driver-dash-network
+
+  frontend:
+    image: node:18
+    container_name: driver-dash-frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    networks:
+      - driver-dash-network
+    environment:
+      - VITE_API_URL=http://backend:3001
+
+volumes:
+  mysql-data:
+
+networks:
+  driver-dash-network:
+    driver: bridge
