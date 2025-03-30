@@ -1,17 +1,23 @@
-
 import React from "react";
-import MainLayout from "@/components/layout/MainLayout";
-import RegisterForm from "@/components/register/RegisterForm";
+import { Card } from "@/components/ui/card";
+import UserRegisterForm from "@/components/register/UserRegisterForm";
 
-const RegisterPage = () => {
+const Register = () => {
   return (
-    <MainLayout>
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight mb-6">Novo Registro</h2>
-        <RegisterForm />
-      </div>
-    </MainLayout>
+    <div className="container flex items-center justify-center min-h-screen py-10">
+      <Card className="w-full max-w-md p-6">
+        <div className="space-y-6">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold">Criar Conta</h1>
+            <p className="text-sm text-muted-foreground">
+              Preencha os dados abaixo para criar sua conta
+            </p>
+          </div>
+          <UserRegisterForm />
+        </div>
+      </Card>
+    </div>
   );
 };
 
-export default RegisterPage;
+export default Register;

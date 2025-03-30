@@ -1,8 +1,7 @@
-
 import React from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile.tsx";
 
 interface MainLayoutProps {
   children: React.ReactNode;

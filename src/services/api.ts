@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const API_URL = process.env.NODE_ENV === 'production' 
@@ -26,11 +25,19 @@ api.interceptors.request.use(
 // Serviços de autenticação
 export const authService = {
   login: async (email: string, password: string) => {
-    const response = await api.post("/auth/login", { email, password });
-    localStorage.setItem("authToken", response.data.token);
-    localStorage.setItem("userId", response.data.userId);
-    localStorage.setItem("userName", response.data.name);
-    return response.data;
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      if (response.data.token) {
+        localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("userId", response.data.userId);
+        localStorage.setItem("userName", response.data.name);
+        return response.data;
+      }
+      throw new Error("Token não recebido do servidor");
+    } catch (error) {
+      console.error("Erro no login:", error);
+      throw error;
+    }
   },
 
   register: async (name: string, email: string, password: string) => {
@@ -45,7 +52,8 @@ export const authService = {
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem("authToken");
+    const token = localStorage.getItem("authToken");
+    return !!token;
   },
 
   getUserName: () => {

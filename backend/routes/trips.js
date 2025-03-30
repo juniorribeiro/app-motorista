@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
@@ -22,7 +21,7 @@ router.post('/', async (req, res) => {
 
   try {
     // Calcular valores adicionais
-    const formattedDate = new Date(date).toISOString().split('T')[0];
+    const formattedDate = date; // A data já vem no formato correto do frontend
     const distanceNum = parseFloat(distance);
     const fuelConsumptionNum = parseFloat(fuelConsumption);
     const fuelPriceNum = parseFloat(fuelPrice);
@@ -178,7 +177,7 @@ router.put('/:id', async (req, res) => {
     }
     
     // Calcular valores adicionais
-    const formattedDate = new Date(date).toISOString().split('T')[0];
+    const formattedDate = date; // A data já vem no formato correto do frontend
     const distanceNum = parseFloat(distance);
     const fuelConsumptionNum = parseFloat(fuelConsumption);
     const fuelPriceNum = parseFloat(fuelPrice);

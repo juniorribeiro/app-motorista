@@ -1,4 +1,3 @@
-
 # DriverDash - Backend
 
 Backend em Node.js para a aplicação DriverDash, um sistema de registro e análise de viagens para motoristas.

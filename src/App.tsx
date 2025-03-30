@@ -1,35 +1,113 @@
-
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
+import { useAuth } from "@/hooks/useAuth";
+import MainLayout from "@/components/layout/MainLayout";
+import Login from "@/pages/Login";
 import Register from "./pages/Register";
-import History from "./pages/History";
-import NotFound from "./pages/NotFound";
+import Dashboard from "@/pages/Dashboard";
+import History from "@/pages/History";
+import Reports from "@/pages/Reports";
+import RegisterTrip from "@/pages/RegisterTrip";
+import Settings from "@/pages/Settings";
+import Fuel from "@/pages/Fuel";
+import Profile from "@/pages/Profile";
 
-const queryClient = new QueryClient();
+function App() {
+  const { isAuthenticated } = useAuth();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  return (
+    <>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register-user" element={<Register />} />
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/register-trip"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <RegisterTrip />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <History />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Reports />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Settings />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/fuel"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Fuel />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Profile />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+      </Routes>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/history" element={<History />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </>
+  );
+}
 
 export default App;

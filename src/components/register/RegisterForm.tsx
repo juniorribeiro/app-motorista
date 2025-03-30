@@ -1,4 +1,3 @@
-
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +20,7 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { tripService } from "@/services/api";
 
 const formSchema = z.object({
   date: z.date({
@@ -63,51 +63,43 @@ const RegisterForm = () => {
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log("Form data:", data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Enviar dados para a API
+      const response = await tripService.addTrip({
+        date: format(data.date, "yyyy-MM-dd"),
+        distance: data.distance,
+        fuelConsumption: data.fuelConsumption,
+        fuelPrice: data.fuelPrice,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        earnings: data.earnings,
+      });
 
-    // Calcular valores
-    const distance = parseFloat(data.distance);
-    const fuelConsumption = parseFloat(data.fuelConsumption);
-    const fuelPrice = parseFloat(data.fuelPrice);
-    const earnings = parseFloat(data.earnings);
+      // Mostrar mensagem de sucesso com os cálculos
+      toast({
+        title: "Registro salvo com sucesso!",
+        description: (
+          <div className="mt-2 text-sm">
+            <p>Tempo trabalhado: {response.calculations.timeWorked}</p>
+            <p>Custo combustível: R$ {response.calculations.fuelCost.toFixed(2)}</p>
+            <p>Ganho líquido: R$ {response.calculations.netEarnings.toFixed(2)}</p>
+            <p>Ganho por km: R$ {response.calculations.earningsPerKm.toFixed(2)}</p>
+            <p>Ganho por hora: R$ {response.calculations.earningsPerHour.toFixed(2)}</p>
+          </div>
+        ),
+      });
 
-    // Calcular litros usados e custo combustível
-    const litersUsed = distance / fuelConsumption;
-    const fuelCost = litersUsed * fuelPrice;
-
-    // Calcular tempo trabalhado
-    const startTime = data.startTime.split(":");
-    const endTime = data.endTime.split(":");
-    const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-    const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
-    const workedMinutes = endMinutes >= startMinutes 
-      ? endMinutes - startMinutes 
-      : (24 * 60) - startMinutes + endMinutes;
-    
-    const workedHours = Math.floor(workedMinutes / 60);
-    const remainingMinutes = workedMinutes % 60;
-    const timeWorked = `${workedHours}h ${remainingMinutes}m`;
-
-    // Calcular ganho líquido
-    const netEarnings = earnings - fuelCost;
-
-    // Calcular ganho por km e por hora
-    const earningsPerKm = netEarnings / distance;
-    const earningsPerHour = netEarnings / (workedMinutes / 60);
-
-    toast({
-      title: "Registro salvo com sucesso!",
-      description: (
-        <div className="mt-2 text-sm">
-          <p>Tempo trabalhado: {timeWorked}</p>
-          <p>Custo combustível: R$ {fuelCost.toFixed(2)}</p>
-          <p>Ganho líquido: R$ {netEarnings.toFixed(2)}</p>
-          <p>Ganho por km: R$ {earningsPerKm.toFixed(2)}</p>
-          <p>Ganho por hora: R$ {earningsPerHour.toFixed(2)}</p>
-        </div>
-      ),
-    });
+      // Limpar formulário
+      form.reset();
+    } catch (error) {
+      console.error("Erro ao salvar registro:", error);
+      toast({
+        title: "Erro ao salvar registro",
+        description: "Ocorreu um erro ao tentar salvar o registro. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
