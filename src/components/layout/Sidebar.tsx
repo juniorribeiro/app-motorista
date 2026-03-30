@@ -47,8 +47,6 @@ export default function Sidebar({ className }: SidebarProps) {
         className
       )}
     >
-      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-      </div>
       <div className="flex-1">
         <nav className="grid gap-1 p-2">
           {menuItems.map((item) => (
