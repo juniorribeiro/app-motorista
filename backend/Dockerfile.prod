@@ -1,0 +1,37 @@
+# ============================================================
+# Backend — Produção
+# ============================================================
+FROM node:20-alpine AS production
+
+# Segurança: instalar dumb-init para PID 1 correto
+RUN apk add --no-cache dumb-init
+
+# Criar usuário não-root
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copiar arquivos de dependência
+COPY package.json package-lock.json* ./
+
+# Instalar apenas dependências de produção
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
+# Copiar código-fonte
+COPY . .
+
+# Ajustar permissões
+RUN chown -R appuser:appgroup /app
+
+# Executar como usuário não-root
+USER appuser
+
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/ || exit 1
+
+# dumb-init como PID 1 para sinais corretos
+CMD ["dumb-init", "node", "server.js"]

@@ -9,7 +9,7 @@ import History from "@/pages/History";
 import Reports from "@/pages/Reports";
 import RegisterTrip from "@/pages/RegisterTrip";
 import Settings from "@/pages/Settings";
-import Fuel from "@/pages/Fuel";
+import Costs from "@/pages/Costs";
 import Profile from "@/pages/Profile";
 
 function App() {
@@ -81,11 +81,11 @@ function App() {
           }
         />
         <Route
-          path="/fuel"
+          path="/costs"
           element={
             isAuthenticated ? (
               <MainLayout>
-                <Fuel />
+                <Costs />
               </MainLayout>
             ) : (
               <Navigate to="/login" replace />

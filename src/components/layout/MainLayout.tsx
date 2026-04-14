@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import MobileBottomNav from "./MobileBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile.tsx";
 
 interface MainLayoutProps {
@@ -19,10 +20,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Sidebar />
           </div>
         )}
-        <main className="flex-1 p-4 md:p-6 bg-background overflow-auto">
+        <main className="flex-1 p-4 pb-20 lg:pb-6 md:p-6 bg-background overflow-auto">
           {children}
         </main>
       </div>
+      <MobileBottomNav />
     </div>
   );
 };

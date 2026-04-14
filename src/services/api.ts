@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://seu-backend-production.com/api' 
-  : 'http://localhost:3001/api';
+const API_URL = import.meta.env.PROD
+  ? '/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -31,6 +31,7 @@ export const authService = {
         localStorage.setItem("authToken", response.data.token);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("userName", response.data.name);
+        localStorage.setItem("userEmail", email);
         return response.data;
       }
       throw new Error("Token não recebido do servidor");
@@ -49,6 +50,7 @@ export const authService = {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
   },
 
   isAuthenticated: () => {
@@ -58,6 +60,10 @@ export const authService = {
 
   getUserName: () => {
     return localStorage.getItem("userName");
+  },
+
+  getUserEmail: () => {
+    return localStorage.getItem("userEmail");
   },
 };
 

@@ -5,6 +5,7 @@ import { authService } from "@/services/api";
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
   const [userName, setUserName] = useState(authService.getUserName() || "");
+  const [userEmail, setUserEmail] = useState(authService.getUserEmail() || "");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -12,9 +13,11 @@ export function useAuth() {
     if (token) {
       setIsAuthenticated(true);
       setUserName(authService.getUserName() || "");
+      setUserEmail(authService.getUserEmail() || "");
     } else {
       setIsAuthenticated(false);
       setUserName("");
+      setUserEmail("");
     }
   }, []);
 
@@ -23,10 +26,12 @@ export function useAuth() {
     if (token) {
       setIsAuthenticated(true);
       setUserName(authService.getUserName() || "");
+      setUserEmail(authService.getUserEmail() || "");
       navigate("/");
     } else {
       setIsAuthenticated(false);
       setUserName("");
+      setUserEmail("");
       navigate("/login");
     }
   };
@@ -35,6 +40,7 @@ export function useAuth() {
     authService.logout();
     setIsAuthenticated(false);
     setUserName("");
+    setUserEmail("");
     navigate("/login");
   };
 
@@ -42,6 +48,8 @@ export function useAuth() {
     isAuthenticated,
     userName,
     setUserName,
+    userEmail,
+    setUserEmail,
     handleAuth,
     handleLogout,
   };

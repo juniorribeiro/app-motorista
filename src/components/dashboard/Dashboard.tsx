@@ -6,10 +6,9 @@ import {
   TrendingUp, 
   Clock, 
   DollarSign, 
-  Droplets, 
-  Calendar as CalendarIcon 
+  Receipt,
+  PiggyBank
 } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { tripService } from "@/services/api";
@@ -17,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 
 type Trip = {
   id: string;
-  date: string;
+  date: string; // Formato DD/MM/YYYY
   distance: number;
   fuelConsumption: number;
   fuelPrice: number;
@@ -26,15 +25,30 @@ type Trip = {
   earnings: number;
 };
 
+type Cost = {
+  id: string;
+  date: string; // Formato YYYY-MM-DD
+  amount: number;
+  category: string;
+};
+
 const Dashboard = () => {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [costs, setCosts] = useState<Cost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     loadTrips();
+    loadCosts();
   }, []);
+
+  const loadCosts = () => {
+    const savedCosts = localStorage.getItem("costsRecords");
+    if (savedCosts) {
+      setCosts(JSON.parse(savedCosts));
+    }
+  };
 
   const loadTrips = async () => {
     try {
@@ -73,12 +87,18 @@ const Dashboard = () => {
       return tripDate >= startOfWeek && tripDate <= today;
     });
 
+    const weekCosts = costs.filter(cost => {
+      const [year, month, day] = cost.date.split("-").map(Number);
+      const costDate = new Date(year, month - 1, day);
+      return costDate >= startOfWeek && costDate <= today;
+    });
+
     const totalEarnings = weekTrips.reduce((sum, trip) => sum + trip.earnings, 0);
     const totalDistance = weekTrips.reduce((sum, trip) => sum + trip.distance, 0);
-    const totalFuelCost = weekTrips.reduce((sum, trip) => {
-      const litersUsed = trip.distance / trip.fuelConsumption;
-      return sum + (litersUsed * trip.fuelPrice);
-    }, 0);
+    const totalCostsAmount = weekCosts.reduce((sum, cost) => sum + cost.amount, 0);
+
+    // Lucro Líquido = Faturamento Total - Custos Totais da tela de Custos
+    const netEarnings = totalEarnings - totalCostsAmount;
 
     // Calcular horas trabalhadas
     const totalHours = weekTrips.reduce((sum, trip) => {
@@ -93,9 +113,10 @@ const Dashboard = () => {
 
     return {
       earnings: totalEarnings,
+      netEarnings,
       distance: totalDistance,
       hours: `${hours}h ${minutes}m`,
-      fuelCost: totalFuelCost,
+      costs: totalCostsAmount,
     };
   };
 
@@ -114,11 +135,14 @@ const Dashboard = () => {
         return tripDate.toDateString() === date.toDateString();
       });
 
+      const dayCosts = costs.filter(cost => {
+        const [year, month, day] = cost.date.split("-").map(Number);
+        const costDate = new Date(year, month - 1, day);
+        return costDate.toDateString() === date.toDateString();
+      });
+
       const earnings = dayTrips.reduce((sum, trip) => sum + trip.earnings, 0);
-      const expenses = dayTrips.reduce((sum, trip) => {
-        const litersUsed = trip.distance / trip.fuelConsumption;
-        return sum + (litersUsed * trip.fuelPrice);
-      }, 0);
+      const expenses = dayCosts.reduce((sum, cost) => sum + cost.amount, 0);
 
       return {
         date: `${date.getDate()}/${date.getMonth() + 1}`,
@@ -145,6 +169,7 @@ const Dashboard = () => {
         distance: trip.distance,
         earnings: trip.earnings,
         hours: `${trip.startTime} - ${trip.endTime}`,
+        // Esse campo mantido apenas para compatibilidade visual na listagem de viagens se existir lá
         fuelCost: (trip.distance / trip.fuelConsumption) * trip.fuelPrice,
       }));
   };
@@ -170,12 +195,25 @@ const Dashboard = () => {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Grid responsivo com 5 cards: Faturamento, Lucro Líquido, Custos, Km, Horas */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <StatCard
-          title="Ganho Total (Semana)"
+          title="Faturamento Bruto (Semana)"
           value={`R$ ${stats.earnings.toFixed(2)}`}
           icon={DollarSign}
           trend={{ value: 8.2, isPositive: true }}
+        />
+        <StatCard
+          title="Lucro Líquido (Semana)"
+          value={`R$ ${stats.netEarnings.toFixed(2)}`}
+          icon={PiggyBank}
+          trend={{ value: 5.1, isPositive: true }}
+        />
+        <StatCard
+          title="Custos (Semana)"
+          value={`R$ ${stats.costs.toFixed(2)}`}
+          icon={Receipt}
+          trend={{ value: 2.1, isPositive: false }}
         />
         <StatCard
           title="Km Rodados (Semana)"
@@ -189,16 +227,10 @@ const Dashboard = () => {
           icon={Clock}
           trend={{ value: 2.1, isPositive: true }}
         />
-        <StatCard
-          title="Custo Combustível"
-          value={`R$ ${stats.fuelCost.toFixed(2)}`}
-          icon={Droplets}
-          trend={{ value: 3.5, isPositive: false }}
-        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-1 md:col-span-2 lg:col-span-4">
           <CardHeader>
             <CardTitle>Ganhos e Despesas</CardTitle>
           </CardHeader>
@@ -206,7 +238,7 @@ const Dashboard = () => {
             <EarningsChart data={chartData} />
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle>Viagens Recentes</CardTitle>
           </CardHeader>

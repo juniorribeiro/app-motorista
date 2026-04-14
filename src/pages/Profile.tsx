@@ -7,19 +7,40 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Profile = () => {
   const { toast } = useToast();
-  const { userName, setUserName } = useAuth();
+  const { userName, setUserName, userEmail, setUserEmail } = useAuth();
   const [name, setName] = React.useState(userName || "");
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(userEmail || "");
   const [phone, setPhone] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
+    if (password && password !== confirmPassword) {
+      toast({
+        title: "Erro de validação",
+        description: "As senhas informadas não coincidem.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Aqui você pode adicionar a lógica para salvar no backend
       setUserName(name);
+      setUserEmail(email);
+      localStorage.setItem("userEmail", email);
+
+      if (password) {
+        // Implementar lógica de chamar endpoint para alterar a senha:
+        // api.changePassword(password);
+        setPassword("");
+        setConfirmPassword("");
+      }
       
       toast({
         title: "Sucesso",
@@ -75,6 +96,31 @@ const Profile = () => {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="(00) 00000-0000"
             />
+          </div>
+
+          <div className="pt-6 mt-6 border-t">
+            <h3 className="text-lg font-medium mb-4">Troca de Senha</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nova Senha</label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Deixe em branco para manter a atual"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Confirmar Nova Senha</label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirme a nova senha"
+                />
+              </div>
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>

@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Settings as SettingsIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings as SettingsIcon, Target } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,9 @@ interface UserSettings {
   currency: "BRL" | "USD" | "EUR";
   distanceUnit: "km" | "mi";
   language: "pt-BR" | "en-US" | "es";
+  dailyGoal?: number;
+  weeklyGoal?: number;
+  monthlyGoal?: number;
 }
 
 export default function Settings() {
@@ -28,16 +32,31 @@ export default function Settings() {
     currency: "BRL",
     distanceUnit: "km",
     language: "pt-BR",
+    dailyGoal: 0,
+    weeklyGoal: 0,
+    monthlyGoal: 0,
   });
 
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Carregar configurações do localStorage se existirem
+    const savedSettings = localStorage.getItem("userSettings");
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setSettings(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error("Erro ao carregar configurações", e);
+      }
+    }
+  }, []);
+
   const handleSaveSettings = () => {
-    // Aqui você implementaria a lógica para salvar as configurações
     localStorage.setItem("userSettings", JSON.stringify(settings));
     toast({
       title: "Configurações salvas",
-      description: "Suas preferências foram atualizadas com sucesso.",
+      description: "Suas preferências e metas foram atualizadas com sucesso.",
     });
   };
 
@@ -48,12 +67,66 @@ export default function Settings() {
         <div>
           <h1 className="text-3xl font-bold">Configurações</h1>
           <p className="text-muted-foreground">
-            Personalize sua experiência no aplicativo
+            Personalize sua experiência no aplicativo e defina suas metas
           </p>
         </div>
       </div>
 
       <div className="grid gap-6">
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Metas Financeiras (Faturamento)</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dailyGoal">Meta Diária (R$)</Label>
+              <Input
+                id="dailyGoal"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ex: 250.00"
+                value={settings.dailyGoal || ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, dailyGoal: parseFloat(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="weeklyGoal">Meta Semanal (R$)</Label>
+              <Input
+                id="weeklyGoal"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ex: 1500.00"
+                value={settings.weeklyGoal || ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, weeklyGoal: parseFloat(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="monthlyGoal">Meta Mensal (R$)</Label>
+              <Input
+                id="monthlyGoal"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ex: 6000.00"
+                value={settings.monthlyGoal || ""}
+                onChange={(e) =>
+                  setSettings({ ...settings, monthlyGoal: parseFloat(e.target.value) || 0 })
+                }
+              />
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            Essas metas serão usadas posteriormente para gerar estatísticas e acompanhar seu progresso no dashboard.
+          </p>
+        </Card>
+
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Aparência</h2>
           <div className="space-y-4">
@@ -162,4 +235,4 @@ export default function Settings() {
       </div>
     </div>
   );
-} 
+}

@@ -10,7 +10,7 @@ import {
   Settings,
   User,
   LogOut,
-  Fuel,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -34,7 +34,7 @@ export default function Sidebar({ className }: SidebarProps) {
   const menuItems = [
     { id: "dashboard", name: "Dashboard", icon: Home, path: "/" },
     { id: "register-trip", name: "Nova Viagem", icon: PlusCircle, path: "/register-trip" },
-    { id: "fuel", name: "Abastecimentos", icon: Fuel, path: "/fuel" },
+    { id: "costs", name: "Custos", icon: Receipt, path: "/costs" },
     { id: "history", name: "Histórico", icon: History, path: "/history" },
     { id: "reports", name: "Relatórios", icon: FileText, path: "/reports" },
     { id: "settings", name: "Configurações", icon: Settings, path: "/settings" },
