@@ -1,12 +1,13 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Receipt, PlusCircle, History } from "lucide-react";
+import { Receipt, PlusCircle, History, BookOpenText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MobileBottomNav = () => {
   const navItems = [
     { id: "costs", name: "Custos", icon: Receipt, path: "/costs" },
     { id: "register-trip", name: "Nova Viagem", icon: PlusCircle, path: "/register-trip" },
+    { id: "diary", name: "Diario", icon: BookOpenText, path: "/diary" },
     { id: "history", name: "Histórico", icon: History, path: "/history" },
   ];
 

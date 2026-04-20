@@ -11,6 +11,7 @@ import RegisterTrip from "@/pages/RegisterTrip";
 import Settings from "@/pages/Settings";
 import Costs from "@/pages/Costs";
 import Profile from "@/pages/Profile";
+import Diary from "@/pages/Diary";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -98,6 +99,18 @@ function App() {
             isAuthenticated ? (
               <MainLayout>
                 <Profile />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/diary"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Diary />
               </MainLayout>
             ) : (
               <Navigate to="/login" replace />

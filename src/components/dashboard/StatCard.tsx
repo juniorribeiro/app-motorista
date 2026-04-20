@@ -13,6 +13,7 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
+  trendLabel?: string;
   className?: string;
 }
 
@@ -22,6 +23,7 @@ const StatCard = ({
   icon: Icon,
   description,
   trend,
+  trendLabel = "vs semana anterior",
   className,
 }: StatCardProps) => {
   return (
@@ -43,7 +45,7 @@ const StatCard = ({
             )}
           >
             {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
-            <span className="text-muted-foreground ml-1">desde ontem</span>
+            <span className="text-muted-foreground ml-1">{trendLabel}</span>
           </div>
         )}
       </CardContent>

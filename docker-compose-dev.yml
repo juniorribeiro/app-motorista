@@ -54,7 +54,7 @@ services:
     networks:
       - driver-dash-network
     environment:
-      - VITE_API_URL=http://backend:3001
+      - VITE_API_URL=http://localhost:3001/api
 
 volumes:
   mysql-data:

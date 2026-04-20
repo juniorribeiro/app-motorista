@@ -63,7 +63,7 @@ const LoginPage = () => {
   // Se já estiver autenticado, redireciona para o dashboard
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

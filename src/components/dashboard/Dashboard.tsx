@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import StatCard from "./StatCard";
-import RecentTrips from "./RecentTrips";
 import EarningsChart from "./EarningsChart";
 import { 
   TrendingUp, 
@@ -10,7 +9,6 @@ import {
   PiggyBank
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { tripService } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -74,50 +72,80 @@ const Dashboard = () => {
     }
   };
 
-  // Calcular estatísticas da semana atual
-  const getCurrentWeekStats = () => {
+  const parseTripDate = (dateString: string) => {
+    const [day, month, year] = dateString.split("/").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const parseCostDate = (dateString: string) => {
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const getTripDurationInHours = (startTime: string, endTime: string) => {
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
+    const startInMinutes = startHour * 60 + startMinute;
+    const endInMinutes = endHour * 60 + endMinute;
+    const durationInMinutes = Math.max(endInMinutes - startInMinutes, 0);
+    return durationInMinutes / 60;
+  };
+
+  const getWeekRange = (referenceDate: Date, weekOffset: number) => {
+    const start = new Date(referenceDate);
+    start.setDate(referenceDate.getDate() - referenceDate.getDay() + weekOffset * 7);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    return { start, end };
+  };
+
+  const getWeekStats = (weekOffset: number) => {
     const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
+    const { start, end } = getWeekRange(today, weekOffset);
 
-    const weekTrips = trips.filter(trip => {
-      const [day, month, year] = trip.date.split("/").map(Number);
-      const tripDate = new Date(year, month - 1, day);
-      return tripDate >= startOfWeek && tripDate <= today;
+    const weekTrips = trips.filter((trip) => {
+      const tripDate = parseTripDate(trip.date);
+      return tripDate >= start && tripDate <= end;
     });
 
-    const weekCosts = costs.filter(cost => {
-      const [year, month, day] = cost.date.split("-").map(Number);
-      const costDate = new Date(year, month - 1, day);
-      return costDate >= startOfWeek && costDate <= today;
+    const weekCosts = costs.filter((cost) => {
+      const costDate = parseCostDate(cost.date);
+      return costDate >= start && costDate <= end;
     });
 
-    const totalEarnings = weekTrips.reduce((sum, trip) => sum + trip.earnings, 0);
-    const totalDistance = weekTrips.reduce((sum, trip) => sum + trip.distance, 0);
-    const totalCostsAmount = weekCosts.reduce((sum, cost) => sum + cost.amount, 0);
-
-    // Lucro Líquido = Faturamento Total - Custos Totais da tela de Custos
-    const netEarnings = totalEarnings - totalCostsAmount;
-
-    // Calcular horas trabalhadas
-    const totalHours = weekTrips.reduce((sum, trip) => {
-      const [startHour, startMinute] = trip.startTime.split(":").map(Number);
-      const [endHour, endMinute] = trip.endTime.split(":").map(Number);
-      const duration = (endHour - startHour) + (endMinute - startMinute) / 60;
-      return sum + duration;
-    }, 0);
-
-    const hours = Math.floor(totalHours);
-    const minutes = Math.round((totalHours - hours) * 60);
+    const earnings = weekTrips.reduce((sum, trip) => sum + trip.earnings, 0);
+    const distance = weekTrips.reduce((sum, trip) => sum + trip.distance, 0);
+    const costsAmount = weekCosts.reduce((sum, cost) => sum + cost.amount, 0);
+    const netEarnings = earnings - costsAmount;
+    const hoursValue = weekTrips.reduce(
+      (sum, trip) => sum + getTripDurationInHours(trip.startTime, trip.endTime),
+      0
+    );
 
     return {
-      earnings: totalEarnings,
+      earnings,
       netEarnings,
-      distance: totalDistance,
-      hours: `${hours}h ${minutes}m`,
-      costs: totalCostsAmount,
+      costs: costsAmount,
+      distance,
+      hoursValue,
     };
+  };
+
+  const formatHours = (totalHours: number) => {
+    const hours = Math.floor(totalHours);
+    const minutes = Math.round((totalHours - hours) * 60);
+    return `${hours}h ${minutes}m`;
+  };
+
+  const getPercentageChange = (current: number, previous: number) => {
+    if (previous === 0) {
+      return current === 0 ? 0 : 100;
+    }
+    return (Math.abs(current - previous) / Math.abs(previous)) * 100;
   };
 
   // Preparar dados do gráfico
@@ -152,31 +180,9 @@ const Dashboard = () => {
     });
   };
 
-  // Preparar viagens recentes
-  const getRecentTrips = () => {
-    return trips
-      .sort((a, b) => {
-        const [dayA, monthA, yearA] = a.date.split("/").map(Number);
-        const [dayB, monthB, yearB] = b.date.split("/").map(Number);
-        const dateA = new Date(yearA, monthA - 1, dayA);
-        const dateB = new Date(yearB, monthB - 1, dayB);
-        return dateB.getTime() - dateA.getTime();
-      })
-      .slice(0, 4)
-      .map(trip => ({
-        id: trip.id,
-        date: trip.date,
-        distance: trip.distance,
-        earnings: trip.earnings,
-        hours: `${trip.startTime} - ${trip.endTime}`,
-        // Esse campo mantido apenas para compatibilidade visual na listagem de viagens se existir lá
-        fuelCost: (trip.distance / trip.fuelConsumption) * trip.fuelPrice,
-      }));
-  };
-
-  const stats = getCurrentWeekStats();
+  const currentWeekStats = getWeekStats(0);
+  const previousWeekStats = getWeekStats(-1);
   const chartData = getChartData();
-  const recentTrips = getRecentTrips();
 
   if (isLoading) {
     return (
@@ -199,51 +205,58 @@ const Dashboard = () => {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Faturamento Bruto (Semana)"
-          value={`R$ ${stats.earnings.toFixed(2)}`}
+          value={`R$ ${currentWeekStats.earnings.toFixed(2)}`}
           icon={DollarSign}
-          trend={{ value: 8.2, isPositive: true }}
+          trend={{
+            value: getPercentageChange(currentWeekStats.earnings, previousWeekStats.earnings),
+            isPositive: currentWeekStats.earnings >= previousWeekStats.earnings,
+          }}
         />
         <StatCard
           title="Lucro Líquido (Semana)"
-          value={`R$ ${stats.netEarnings.toFixed(2)}`}
+          value={`R$ ${currentWeekStats.netEarnings.toFixed(2)}`}
           icon={PiggyBank}
-          trend={{ value: 5.1, isPositive: true }}
+          trend={{
+            value: getPercentageChange(currentWeekStats.netEarnings, previousWeekStats.netEarnings),
+            isPositive: currentWeekStats.netEarnings >= previousWeekStats.netEarnings,
+          }}
         />
         <StatCard
           title="Custos (Semana)"
-          value={`R$ ${stats.costs.toFixed(2)}`}
+          value={`R$ ${currentWeekStats.costs.toFixed(2)}`}
           icon={Receipt}
-          trend={{ value: 2.1, isPositive: false }}
+          trend={{
+            value: getPercentageChange(currentWeekStats.costs, previousWeekStats.costs),
+            isPositive: currentWeekStats.costs <= previousWeekStats.costs,
+          }}
         />
         <StatCard
           title="Km Rodados (Semana)"
-          value={`${stats.distance.toFixed(1)} km`}
+          value={`${currentWeekStats.distance.toFixed(1)} km`}
           icon={TrendingUp}
-          trend={{ value: 4.3, isPositive: true }}
+          trend={{
+            value: getPercentageChange(currentWeekStats.distance, previousWeekStats.distance),
+            isPositive: currentWeekStats.distance >= previousWeekStats.distance,
+          }}
         />
         <StatCard
           title="Horas Trabalhadas"
-          value={stats.hours}
+          value={formatHours(currentWeekStats.hoursValue)}
           icon={Clock}
-          trend={{ value: 2.1, isPositive: true }}
+          trend={{
+            value: getPercentageChange(currentWeekStats.hoursValue, previousWeekStats.hoursValue),
+            isPositive: currentWeekStats.hoursValue >= previousWeekStats.hoursValue,
+          }}
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-1 md:col-span-2 lg:col-span-4">
+      <div className="grid gap-4">
+        <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Ganhos e Despesas</CardTitle>
           </CardHeader>
           <CardContent>
             <EarningsChart data={chartData} />
-          </CardContent>
-        </Card>
-        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Viagens Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecentTrips trips={recentTrips} />
           </CardContent>
         </Card>
       </div>

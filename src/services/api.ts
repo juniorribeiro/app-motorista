@@ -1,8 +1,48 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.PROD
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
+const DEV_FALLBACK_API_URL = "http://localhost:3001/api";
+export const AUTH_CHANGED_EVENT = "auth-changed";
+
+const normalizeApiBaseUrl = (rawUrl: string): string => {
+  const trimmed = rawUrl.trim().replace(/\/+$/, "");
+  if (!trimmed) {
+    return DEV_FALLBACK_API_URL;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+};
+
+const isDockerInternalHost = (url: string): boolean => {
+  try {
+    const parsedUrl = new URL(url);
+    return ["backend", "frontend", "mysql"].includes(parsedUrl.hostname);
+  } catch {
+    return false;
+  }
+};
+
+const resolveApiUrl = (): string => {
+  if (import.meta.env.PROD) {
+    return "/api";
+  }
+
+  const configuredApiUrl = import.meta.env.VITE_API_URL;
+  const normalizedUrl = normalizeApiBaseUrl(configuredApiUrl || DEV_FALLBACK_API_URL);
+
+  if (isDockerInternalHost(normalizedUrl)) {
+    console.warn(
+      `[api] VITE_API_URL="${configuredApiUrl}" usa hostname interno do Docker e pode falhar no navegador local. Prefira "http://localhost:3001/api".`
+    );
+  }
+
+  return normalizedUrl;
+};
+
+const API_URL = resolveApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,
@@ -32,6 +72,7 @@ export const authService = {
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("userName", response.data.name);
         localStorage.setItem("userEmail", email);
+        window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
         return response.data;
       }
       throw new Error("Token não recebido do servidor");
@@ -51,6 +92,7 @@ export const authService = {
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
     localStorage.removeItem("userEmail");
+    window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
   },
 
   isAuthenticated: () => {
@@ -106,6 +148,102 @@ export const dashboardService = {
   getDashboardData: async (period: string = 'week') => {
     const response = await api.get(`/dashboard/summary?period=${period}`);
     return response.data;
+  },
+};
+
+export type DiaryResultEvaluation =
+  | "worked_well"
+  | "partially_worked"
+  | "did_not_work";
+
+export type DiaryTag =
+  | "chuva"
+  | "evento_na_cidade"
+  | "tarifa_dinamica"
+  | "horario_pico";
+
+export interface DiaryEntryPayload {
+  date: string;
+  isHoliday: boolean;
+  holidayName?: string;
+  tags?: DiaryTag[];
+  strategyHypothesis: string;
+  executionNotes: string;
+  resultEvaluation: DiaryResultEvaluation;
+  lessonsLearned: string;
+}
+
+export interface DiaryEntry extends DiaryEntryPayload {
+  id: number;
+  createdAt?: string;
+  updatedAt?: string;
+  year?: number;
+}
+
+export interface PaginatedDiaryResponse {
+  data: DiaryEntry[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface HolidayReminder {
+  id: number;
+  originalDate: string;
+  upcomingDate: string;
+  holidayName: string;
+  tags?: DiaryTag[];
+  strategyHypothesis: string;
+  executionNotes: string;
+  resultEvaluation: DiaryResultEvaluation;
+  lessonsLearned: string;
+}
+
+export const diaryService = {
+  createEntry: async (payload: DiaryEntryPayload) => {
+    const response = await api.post("/diary", payload);
+    return response.data;
+  },
+
+  getEntries: async (params?: {
+    result?: DiaryResultEvaluation;
+    startDate?: string;
+    endDate?: string;
+    q?: string;
+    tag?: DiaryTag;
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const response = await api.get("/diary", { params });
+    return response.data as PaginatedDiaryResponse;
+  },
+
+  getEntryById: async (id: number) => {
+    const response = await api.get(`/diary/${id}`);
+    return response.data as DiaryEntry;
+  },
+
+  updateEntry: async (id: number, payload: DiaryEntryPayload) => {
+    const response = await api.put(`/diary/${id}`, payload);
+    return response.data;
+  },
+
+  deleteEntry: async (id: number) => {
+    const response = await api.delete(`/diary/${id}`);
+    return response.data;
+  },
+
+  getSameDayHistory: async () => {
+    const response = await api.get("/diary/same-day-history");
+    return response.data as { latest: DiaryEntry | null; entries: DiaryEntry[] };
+  },
+
+  getHolidayReminders: async (daysAhead: number = 3) => {
+    const response = await api.get("/diary/holiday-reminders", {
+      params: { daysAhead },
+    });
+    return response.data as HolidayReminder[];
   },
 };
 

@@ -5,6 +5,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const tripRoutes = require('./routes/trips');
 const dashboardRoutes = require('./routes/dashboard');
+const diaryRoutes = require('./routes/diary');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/diary', diaryRoutes);
 
 // Rota de teste
 app.get('/', (req, res) => {

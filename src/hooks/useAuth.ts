@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from "@/services/api";
+import { AUTH_CHANGED_EVENT, authService } from "@/services/api";
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
@@ -8,30 +8,48 @@ export function useAuth() {
   const [userEmail, setUserEmail] = useState(authService.getUserEmail() || "");
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const syncAuthState = () => {
     const token = localStorage.getItem("authToken");
     if (token) {
       setIsAuthenticated(true);
       setUserName(authService.getUserName() || "");
       setUserEmail(authService.getUserEmail() || "");
-    } else {
-      setIsAuthenticated(false);
-      setUserName("");
-      setUserEmail("");
+      return;
     }
+
+    setIsAuthenticated(false);
+    setUserName("");
+    setUserEmail("");
+  };
+
+  useEffect(() => {
+    syncAuthState();
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key && !["authToken", "userName", "userEmail"].includes(event.key)) {
+        return;
+      }
+      syncAuthState();
+    };
+
+    const handleAuthChanged = () => {
+      syncAuthState();
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+    };
   }, []);
 
   const handleAuth = () => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      setIsAuthenticated(true);
-      setUserName(authService.getUserName() || "");
-      setUserEmail(authService.getUserEmail() || "");
+    syncAuthState();
+    if (localStorage.getItem("authToken")) {
       navigate("/");
     } else {
-      setIsAuthenticated(false);
-      setUserName("");
-      setUserEmail("");
       navigate("/login");
     }
   };
