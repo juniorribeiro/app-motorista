@@ -1,0 +1,9 @@
+OBSERVAÇÃO: Esse novo recurso será uma tela e link a parte chamado Importar. Todos os dados desse novo recurso não será somado aos números atuais do sistema, ou seja, os números que todo o sistema deve levar em consideração em estátisticas e todos os calculos é apenas através do registro de viagems pelo botão "Nova Viagem", e também "Custos".
+Essa nova tela iremos apenas importar as informações como primeira fase, e depois iremos integrar os números das importações para dentro dos calculos atuais.
+Quero desenvolver um novo recurso e ele é um tanto complexo porque exige integração com uma tela de login e senha na Uber para extrair dados de uma interface especifica.
+Eu preciso entrar na url https://drivers.uber.com/earnings/statements  entrar com login e senha e extrair as informações das viagens de cada pdf listado nessa página.
+Faça um teste na prática, abrindo navegador se for necessário, acesse a url que coloquei acima com o usuário linux.almir@gmail.com e senha qazwsx3008 e analise um modo de conseguir extrair essas informações para dentro do sistema.
+
+Segue um exemplo do pdf que será importado.
+
+relatório uber.pdf

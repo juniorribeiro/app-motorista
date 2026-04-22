@@ -247,4 +247,75 @@ export const diaryService = {
   },
 };
 
+// ============================================================
+// Serviço de Importação de Extratos Uber
+// ============================================================
+
+export interface ImportedStatement {
+  id: number;
+  periodStart: string;
+  periodEnd: string;
+  totalEarnings: number;
+  fareBase: number;
+  fareSurge: number;
+  farePriority: number;
+  fareWaitTime: number;
+  totalPayouts: number;
+  startingBalance: number;
+  endingBalance: number;
+  originalFilename: string;
+  importStatus: "processing" | "completed" | "error";
+  errorMessage: string | null;
+  createdAt: string;
+  tripsCount: number;
+}
+
+export interface ImportedTrip {
+  id: number;
+  tripDate: string;
+  tripTime: string | null;
+  startTime: string | null;
+  serviceType: string;
+  earnings: number;
+  balanceAfter: number;
+}
+
+export interface ImportedStatementDetail extends Omit<ImportedStatement, "tripsCount"> {
+  trips: ImportedTrip[];
+}
+
+export interface PaginatedImportResponse {
+  data: ImportedStatement[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export const importService = {
+  uploadPdf: async (file: File) => {
+    const formData = new FormData();
+    formData.append("pdf", file);
+    const response = await api.post("/imports/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  getStatements: async (params?: { page?: number; pageSize?: number }) => {
+    const response = await api.get("/imports", { params });
+    return response.data as PaginatedImportResponse;
+  },
+
+  getStatementDetail: async (id: number) => {
+    const response = await api.get(`/imports/${id}`);
+    return response.data as ImportedStatementDetail;
+  },
+
+  deleteStatement: async (id: number) => {
+    const response = await api.delete(`/imports/${id}`);
+    return response.data;
+  },
+};
+
 export default api;

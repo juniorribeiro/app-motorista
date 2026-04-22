@@ -12,6 +12,7 @@ import Settings from "@/pages/Settings";
 import Costs from "@/pages/Costs";
 import Profile from "@/pages/Profile";
 import Diary from "@/pages/Diary";
+import Import from "@/pages/Import";
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -111,6 +112,18 @@ function App() {
             isAuthenticated ? (
               <MainLayout>
                 <Diary />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/import"
+          element={
+            isAuthenticated ? (
+              <MainLayout>
+                <Import />
               </MainLayout>
             ) : (
               <Navigate to="/login" replace />

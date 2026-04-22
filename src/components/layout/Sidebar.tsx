@@ -12,6 +12,7 @@ import {
   LogOut,
   Receipt,
   BookOpenText,
+  Upload,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -39,6 +40,7 @@ export default function Sidebar({ className }: SidebarProps) {
     { id: "diary", name: "Diario", icon: BookOpenText, path: "/diary" },
     { id: "history", name: "Histórico", icon: History, path: "/history" },
     { id: "reports", name: "Relatórios", icon: FileText, path: "/reports" },
+    { id: "import", name: "Importar", icon: Upload, path: "/import" },
     { id: "settings", name: "Configurações", icon: Settings, path: "/settings" },
   ];
 
